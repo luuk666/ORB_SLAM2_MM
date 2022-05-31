@@ -37,6 +37,8 @@
 #include<mutex>
  cv::Mat ptr;
  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>  m;
+ float last_prob = 0;
+ bool first = true;
  bool flag = false;
 namespace ORB_SLAM2
 {
@@ -306,14 +308,19 @@ int Optimizer::PoseOptimization(Frame *pFrame)
                         const cv::KeyPoint& kpUn = pFrame->mvKeysUn[i];
                         obs << kpUn.pt.x, kpUn.pt.y;
                         float  prob = m(kpUn.pt.x, kpUn.pt.y);
-                        cout << prob << endl;
-
+                        float prob2 = (prob * last_prob) / (prob * last_prob + (1 - prob) * (1 - last_prob));
+                        if (first == true)
+                        {
+                            first = false;
+                            prob2 = prob;
+                        }
+                        last_prob = prob;
                         g2o::EdgeSE3ProjectXYZOnlyPose* e = new g2o::EdgeSE3ProjectXYZOnlyPose();
 
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0)));
                         e->setMeasurement(obs);
                         const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave];
-                        e->setInformation(Eigen::Matrix2d::Identity() * invSigma2 * prob);
+                        e->setInformation(Eigen::Matrix2d::Identity() * invSigma2 * prob2);
 
                         g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
                         e->setRobustKernel(rk);
