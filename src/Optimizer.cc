@@ -315,6 +315,14 @@ int Optimizer::PoseOptimization(Frame *pFrame)
                             prob2 = prob;
                         }
                         last_prob = prob;
+                        if(prob2>=0.99)
+                        {
+                            prob2 = 0.99;
+                        }
+                        if(prob2<=0.01)
+                        {
+                            prob2 = 0.01;
+                        }
                         g2o::EdgeSE3ProjectXYZOnlyPose* e = new g2o::EdgeSE3ProjectXYZOnlyPose();
 
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0)));
